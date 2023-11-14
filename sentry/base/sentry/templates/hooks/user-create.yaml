@@ -1,0 +1,77 @@
+---
+# Source: sentry/templates/hooks/user-create.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sentry-user-create
+  labels:
+    app: sentry
+    chart: "sentry-20.9.3"
+    release: "sentry"
+    heritage: "Helm"
+  annotations:
+    "helm.sh/hook": "post-install,post-upgrade"
+    "helm.sh/hook-delete-policy": "hook-succeeded,before-hook-creation"
+    "helm.sh/hook-weight": "9"
+spec:
+  activeDeadlineSeconds: 100
+  template:
+    metadata:
+      name: sentry-user-create
+      annotations:
+        checksum/configmap.yaml: 7fb46986f25c52b4ae3b3195f2837223d04dbda922a47997ac48028becc30e6a
+      labels:
+        app: sentry
+        release: "sentry"
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: user-create-job
+        image: "getsentry/sentry:23.10.1"
+        imagePullPolicy: IfNotPresent
+        command: ["/bin/bash", "-c"]
+        # Create user but do not exit 1 when user already exists (exit code 3 from createuser command)
+        # https://docs.sentry.io/server/cli/createuser/
+        args:
+          - >
+            sentry createuser \
+              --no-input \
+              --superuser \
+              --email "admin@sentry.local" \
+              --password "$ADMIN_PASSWORD" || true; \
+            if [ $? -eq 0 ] || [ $? -eq 3 ]; then \
+              exit 0; \
+            else \
+              exit 1; \
+            fi
+        env:
+        - name: SNUBA
+          value: http://sentry-snuba:1218
+        - name: VROOM
+          value: http://sentry-vroom:8085
+        - name: SENTRY_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: sentry-sentry-secret
+              key: "key"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sentry-sentry-postgresql
+              key: postgres-password
+        - name: ADMIN_PASSWORD
+          value: "aaaa"
+        volumeMounts:
+        - mountPath: /etc/sentry
+          name: config
+          readOnly: true
+        resources:
+          limits:
+            memory: 2048Mi
+          requests:
+            cpu: 300m
+            memory: 2048Mi
+      volumes:
+      - name: config
+        configMap:
+          name: sentry-sentry

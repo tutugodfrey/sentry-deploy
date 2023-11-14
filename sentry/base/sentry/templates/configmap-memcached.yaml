@@ -1,0 +1,9 @@
+---
+# Source: sentry/templates/configmap-memcached.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sentry-memcached
+data:
+  MEMCACHED_MEMORY_LIMIT: "2048"
+  MEMCACHED_MAX_ITEM_SIZE: "26214400"

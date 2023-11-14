@@ -1,0 +1,42 @@
+---
+# Source: sentry/templates/configmap-nginx.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sentry-nginx
+data:
+  server-block.conf: |
+    upstream relay {
+      server sentry-relay:3000;
+    }
+
+    upstream sentry {
+      server sentry-web:9000;
+    }
+
+    server {
+      listen 8080;
+
+      proxy_redirect off;
+      proxy_buffer_size          128k;
+      proxy_buffers              4 256k;
+      proxy_busy_buffers_size    256k;
+      proxy_set_header Host $host;
+
+      location /api/store/ {
+        proxy_pass http://relay;
+      }
+
+      location ~ ^/api/[1-9]\d*/ {
+        proxy_pass http://relay;
+      }  
+
+      location / {
+        proxy_pass http://sentry;
+      }
+
+      location /_static/ {
+        proxy_pass http://sentry;
+        proxy_hide_header Content-Disposition;
+      }
+    }

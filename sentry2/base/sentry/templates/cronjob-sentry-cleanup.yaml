@@ -1,0 +1,73 @@
+---
+# Source: sentry/templates/cronjob-sentry-cleanup.yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: sentry-sentry-cleanup
+  labels:
+    app: sentry
+    chart: "sentry-20.9.3"
+    release: "sentry"
+    heritage: "Helm"
+spec:
+  schedule: "0 0 * * *"
+  successfulJobsHistoryLimit: 5
+  failedJobsHistoryLimit: 5
+  concurrencyPolicy: "Allow"
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 100
+      template:
+        metadata:
+          annotations:
+            checksum/configYml: 44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a
+            checksum/sentryConfPy: d5f85a6a8afbc55eebe23801e1a51a0fb4c0428c9a73ef6708d8dc83e079cd49
+            checksum/config.yaml: 7fb46986f25c52b4ae3b3195f2837223d04dbda922a47997ac48028becc30e6a
+          labels:
+            app: sentry
+            release: "sentry"
+        spec:
+          affinity:
+          containers:
+          - name: sentry-sentry-cleanup
+            image: "getsentry/sentry:23.10.1"
+            imagePullPolicy: IfNotPresent
+            command: ["sentry"]
+            args:
+              - "cleanup"
+              - "--concurrency"
+              - "1"
+              - "--days"
+              - "90"
+            env:
+            - name: C_FORCE_ROOT
+              value: "true"
+            - name: SNUBA
+              value: http://sentry-snuba:1218
+            - name: VROOM
+              value: http://sentry-vroom:8085
+            - name: SENTRY_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: sentry-sentry-secret
+                  key: "key"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sentry-sentry-postgresql
+                  key: postgres-password
+            volumeMounts:
+            - mountPath: /etc/sentry
+              name: config
+              readOnly: true
+            - mountPath: /var/lib/sentry/files
+              name: sentry-data
+            resources:
+              null
+          restartPolicy: Never
+          volumes:
+          - name: config
+            configMap:
+              name: sentry-sentry
+          - name: sentry-data
+            emptyDir: {}

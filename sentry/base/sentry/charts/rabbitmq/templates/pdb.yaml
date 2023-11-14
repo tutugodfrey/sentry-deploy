@@ -1,0 +1,18 @@
+---
+# Source: sentry/charts/rabbitmq/templates/pdb.yaml
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: sentry-rabbitmq
+  namespace: "default"
+  labels:
+    app.kubernetes.io/name: rabbitmq
+    helm.sh/chart: rabbitmq-11.15.3
+    app.kubernetes.io/instance: sentry
+    app.kubernetes.io/managed-by: Helm
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels: 
+      app.kubernetes.io/name: rabbitmq
+      app.kubernetes.io/instance: sentry

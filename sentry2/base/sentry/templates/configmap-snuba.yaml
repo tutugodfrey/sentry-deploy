@@ -1,0 +1,64 @@
+---
+# Source: sentry/templates/configmap-snuba.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sentry-snuba
+  labels:
+    app: sentry
+    chart: "sentry-20.9.3"
+    release: "sentry"
+    heritage: "Helm"
+data:
+  settings.py: |
+    import os
+
+    from snuba.settings import *
+
+    env = os.environ.get
+
+    DEBUG = env("DEBUG", "0").lower() in ("1", "true")
+
+    # Clickhouse Options
+    CLUSTERS = [
+      {
+        "host": env("CLICKHOUSE_HOST", "sentry-clickhouse"),
+        "port": int(9000),
+        "user":  env("CLICKHOUSE_USER", "default"),
+        "password": env("CLICKHOUSE_PASSWORD", ""),
+        "database": env("CLICKHOUSE_DATABASE", "default"),
+        "http_port": 8123,
+        "storage_sets": {
+            "cdc",
+            "discover",
+            "events",
+            "events_ro",
+            "metrics",
+            "migrations",
+            "outcomes",
+            "querylog",
+            "sessions",
+            "transactions",
+            "profiles",
+            "functions",
+            "replays",
+            "generic_metrics_sets",
+            "generic_metrics_distributions",
+            "search_issues",
+            "generic_metrics_counters",
+            "spans",
+            "group_attributes",
+        },
+        "single_node": False,
+        "cluster_name": "sentry-clickhouse",
+        "distributed_cluster_name": "sentry-clickhouse",
+      },
+    ]
+
+    # Redis Options
+    REDIS_HOST = "sentry-sentry-redis-master"
+    REDIS_PORT = 6379
+    REDIS_PASSWORD = ""
+    REDIS_DB = int(env("REDIS_DB", 1))
+
+    # No Python Extension Config Given

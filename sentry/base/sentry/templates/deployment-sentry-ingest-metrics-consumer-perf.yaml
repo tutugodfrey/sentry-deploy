@@ -1,0 +1,78 @@
+---
+# Source: sentry/templates/deployment-sentry-ingest-metrics-consumer-perf.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sentry-ingest-metrics-consumer-perf
+  labels:
+    app: sentry
+    chart: "sentry-20.9.3"
+    release: "sentry"
+    heritage: "Helm"
+    app.kubernetes.io/managed-by: "Helm"
+  annotations:
+    meta.helm.sh/release-name: "sentry"
+    meta.helm.sh/release-namespace: "default"
+    "helm.sh/hook": "post-install,post-upgrade"
+    "helm.sh/hook-weight": "10"
+spec:
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: sentry
+      release: "sentry"
+      role: ingest-metrics-consumer-perf
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+        checksum/configYml: 44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a
+        checksum/sentryConfPy: d5f85a6a8afbc55eebe23801e1a51a0fb4c0428c9a73ef6708d8dc83e079cd49
+        checksum/config.yaml: 7fb46986f25c52b4ae3b3195f2837223d04dbda922a47997ac48028becc30e6a
+      labels:
+        app: sentry
+        release: "sentry"
+        role: ingest-metrics-consumer-perf
+    spec:
+      affinity:
+      containers:
+      - name: sentry-ingest-metrics-consumer-perf
+        image: "getsentry/sentry:23.10.1"
+        imagePullPolicy: IfNotPresent
+        command: ["sentry"]
+        args:
+          - "run"
+          - "ingest-metrics-parallel-consumer"
+          - "--ingest-profile"
+          - "performance"
+        env:
+        - name: C_FORCE_ROOT
+          value: "true"
+        - name: SNUBA
+          value: http://sentry-snuba:1218
+        - name: VROOM
+          value: http://sentry-vroom:8085
+        - name: SENTRY_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: sentry-sentry-secret
+              key: "key"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sentry-sentry-postgresql
+              key: postgres-password
+        volumeMounts:
+        - mountPath: /etc/sentry
+          name: config
+          readOnly: true
+        - mountPath: /var/lib/sentry/files
+          name: sentry-data
+        resources:
+            {}
+      volumes:
+      - name: config
+        configMap:
+          name: sentry-sentry
+      - name: sentry-data
+        emptyDir: {}

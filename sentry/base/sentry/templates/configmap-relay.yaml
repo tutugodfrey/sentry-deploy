@@ -1,0 +1,33 @@
+---
+# Source: sentry/templates/configmap-relay.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sentry-relay
+  labels:
+    app: sentry
+    chart: "sentry-20.9.3"
+    release: "sentry"
+    heritage: "Helm"
+data:
+  config.yml: |-
+    relay:
+      mode: managed
+      upstream: "http://sentry-web:9000/"
+      host: 0.0.0.0
+      port: 3000
+
+    processing:
+      enabled: true
+
+      kafka_config:
+        - name: "bootstrap.servers"
+          value: "sentry-kafka:9092"
+        - name: "message.max.bytes"
+          value: 50000000  # 50MB or bust
+      redis: "redis://:@sentry-sentry-redis-master:6379"
+      topics:
+        metrics_transactions: ingest-performance-metrics
+        metrics_sessions: ingest-metrics
+
+    # No YAML relay config given

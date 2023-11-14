@@ -1,0 +1,22 @@
+---
+# Source: sentry/templates/service-relay.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: sentry-relay
+  annotations:
+  labels:
+    app: sentry
+    chart: "sentry-20.9.3"
+    release: "sentry"
+    heritage: "Helm"
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3000
+    targetPort: 3000
+    protocol: TCP
+    name: sentry-relay
+  selector:
+    app: sentry
+    role: relay
