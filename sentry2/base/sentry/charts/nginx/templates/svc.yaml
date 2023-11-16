@@ -13,6 +13,7 @@ metadata:
   annotations:
 spec:
   type: ClusterIP
+  type: NodePort
   sessionAffinity: None
   ports:
     - name: http

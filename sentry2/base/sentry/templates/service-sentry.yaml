@@ -11,7 +11,8 @@ metadata:
     release: "sentry"
     heritage: "Helm"
 spec:
-  type: ClusterIP
+  #type: ClusterIP
+  type: NodePort
   ports:
   - port: 9000
     targetPort: 9000
