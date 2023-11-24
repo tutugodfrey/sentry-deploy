@@ -1,0 +1,55 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sentry-snuba-migrate
+  labels:
+    app: sentry
+spec:
+  activeDeadlineSeconds: 300
+  parallelism: 1
+  template:
+    metadata:
+      name: sentry-snuba-migrate
+      labels:
+        app: sentry
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: snuba-migrate
+        image: "getsentry/snuba:23.10.1"
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          sleep 60;
+          SNUBA_SETTINGS=distributed snuba migrations migrate --force;
+          echo Finished Running Migration;
+        env:
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: LOG_LEVEL
+          value: debug
+        - name: SNUBA_SETTINGS
+          value: /etc/snuba/settings.py
+        - name: DEFAULT_BROKERS
+          value: "sentry-kafka.$(NAMESPACE).svc.cluster.local:9092"
+        envFrom:
+        - secretRef:
+            name: sentry-snuba-env
+        volumeMounts:
+        - mountPath: /etc/snuba
+          name: config
+          readOnly: true
+        resources:
+          limits:
+            cpu: 2000m
+            memory: 1Gi
+          requests:
+            cpu: 700m
+            memory: 1Gi
+      volumes:
+      - name: config
+        configMap:
+          name: sentry-snuba

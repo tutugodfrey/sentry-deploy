@@ -1,0 +1,100 @@
+---
+# Source: sentry/templates/deployment-relay.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sentry-relay
+  labels:
+    app: sentry
+    chart: "sentry-20.9.3"
+    release: "sentry"
+    heritage: "Helm"
+    app.kubernetes.io/managed-by: "Helm"
+  annotations:
+    meta.helm.sh/release-name: "sentry"
+    meta.helm.sh/release-namespace: "default"
+    "helm.sh/hook": "post-install,post-upgrade"
+    "helm.sh/hook-weight": "25"
+spec:
+  selector:
+    matchLabels:
+      app: sentry
+      release: "sentry"
+      role: relay
+  replicas: 1
+  revisionHistoryLimit: 10
+  template:
+    metadata:
+      annotations:
+        checksum/relay: 8074a66c015a8309dc9bdef7524b89bb223749847663f454012dba4e7ed06cc3
+        checksum/config.yaml: 1f8e25662c4188979a222cfdec5cd1d8318d61bdcfaced0ae0692da250af9bd9
+      labels:
+        app: sentry
+        release: "sentry"
+        role: relay
+    spec:
+      affinity:
+      initContainers:
+        - name: sentry-relay-init
+          image: "getsentry/relay:23.10.1"
+          imagePullPolicy: IfNotPresent
+          args:
+            - "credentials"
+            - "generate"
+          resources:
+            {}
+          env:
+            - name: RELAY_PORT
+              value: '3000'
+          volumeMounts:
+            - name: credentials
+              mountPath: /work/.relay
+            - name: config
+              mountPath: /work/.relay/config.yml
+              subPath: config.yml
+              readOnly: true
+      containers:
+      - name: sentry-relay
+        image: "getsentry/relay:23.10.1"
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3000
+        env:
+        - name: RELAY_PORT
+          value: '3000'
+        volumeMounts:
+          - name: credentials
+            mountPath: /work/.relay
+          - name: config
+            mountPath: /work/.relay/config.yml
+            subPath: config.yml
+            readOnly: true
+        livenessProbe:
+          failureThreshold: 5
+          httpGet:
+            path: /api/relay/healthcheck/live/
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 2
+        readinessProbe:
+          failureThreshold: 5
+          httpGet:
+            path: /api/relay/healthcheck/ready/
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 2
+        resources:
+            {}
+      volumes:
+      - name: config
+        configMap:
+          name: sentry-relay
+          defaultMode: 0644
+      - name: credentials
+        emptyDir: {}

@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - configmap-config.yaml
+  - configmap-users.yaml
+  - svc-clickhouse-headless.yaml
+  - configmap-metrika.yaml
+  - statefulset-clickhouse.yaml
+  - svc-clickhouse.yaml
+  - ingress.yaml

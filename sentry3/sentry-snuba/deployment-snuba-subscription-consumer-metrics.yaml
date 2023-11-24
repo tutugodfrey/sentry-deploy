@@ -1,0 +1,57 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sentry-snuba-subscription-consumer-metrics
+  labels:
+    app: sentry
+spec:
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+        app: sentry
+        role: snuba-subscription-consumer-metrics
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: sentry
+        role: snuba-subscription-consumer-metrics
+    spec:
+      affinity:
+      containers:
+      - name: sentry-snuba
+        image: "getsentry/snuba:23.10.1"
+        imagePullPolicy: IfNotPresent
+        command:
+          - "snuba"
+          - "subscriptions-scheduler-executor"
+          - "--auto-offset-reset=earliest"
+          - "--dataset=metrics"
+          - "--entity=metrics_sets"
+          - "--entity=metrics_counters"
+          - "--consumer-group=nuba-metrics-subscriptions-consumers"
+          - "--followed-consumer-group=snuba-metrics-consumers"
+          - "--delay-seconds=60"
+          - "--schedule-ttl=60"
+          - "--stale-threshold-seconds=900"
+        ports:
+        - containerPort: 1218
+        env:
+        - name: SNUBA_SETTINGS
+          value: /etc/snuba/settings.py
+        - name: DEFAULT_BROKERS
+          value: "sentry-kafka:9092"
+        envFrom:
+        - secretRef:
+            name: sentry-snuba-env
+        volumeMounts:
+        - mountPath: /etc/snuba
+          name: config
+          readOnly: true
+        resources:
+            {}
+      volumes:
+      - name: config
+        configMap:
+          name: sentry-snuba

@@ -1,0 +1,54 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sentry-db-init
+  labels:
+    app: sentry
+spec:
+  activeDeadlineSeconds: 300
+  template:
+    metadata:
+      name: sentry-db-init
+      labels:
+        app: sentry
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: db-init-job
+        image: "getsentry/sentry:23.10.1"
+        imagePullPolicy: IfNotPresent
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          sleep 40;
+          sentry upgrade --noinput;
+        env:
+        - name: SNUBA
+          value: http://sentry-snuba:1218
+        - name: VROOM
+          value: http://sentry-vroom:8085
+        - name: SENTRY_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: sentry-sentry-secret
+              key: "key"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sentry-postgresql-secret
+              key: postgres-password
+        volumeMounts:
+        - mountPath: /etc/sentry
+          name: config
+          readOnly: true
+        resources:
+          limits:
+            memory: 2048Mi
+          requests:
+            cpu: 300m
+            memory: 2048Mi
+      volumes:
+      - name: config
+        configMap:
+          name: sentry-sentry

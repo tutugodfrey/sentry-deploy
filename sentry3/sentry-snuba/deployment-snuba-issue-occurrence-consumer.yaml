@@ -1,0 +1,56 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sentry-issue-occurrence-consumer
+  labels:
+    app: sentry
+spec:
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+        app: sentry
+        role: issue-occurrence-consumer
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: sentry
+        role: issue-occurrence-consumer
+    spec:
+      affinity:
+      containers:
+      - name: sentry-snuba
+        image: "getsentry/snuba:23.10.1"
+        imagePullPolicy: IfNotPresent
+        command:
+          - "snuba"
+          - "consumer"
+          - "--storage"
+          - "search_issues"
+          - "--consumer-group"
+          - "generic_events_group"
+          - "--auto-offset-reset"
+          - "earliest"
+          - "--max-batch-time-ms"
+          - "750"
+        ports:
+        - containerPort: 1218
+        env:
+        - name: SNUBA_SETTINGS
+          value: /etc/snuba/settings.py
+        - name: DEFAULT_BROKERS
+          value: "sentry-kafka:9092"
+        envFrom:
+        - secretRef:
+            name: sentry-snuba-env
+        volumeMounts:
+        - mountPath: /etc/snuba
+          name: config
+          readOnly: true
+        resources:
+            {}
+      volumes:
+        - name: config
+          configMap:
+            name: sentry-snuba

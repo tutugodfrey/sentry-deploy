@@ -1,0 +1,61 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sentry-subscription-consumer-transactions
+  labels:
+    app: sentry
+spec:
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+        app: sentry
+        role: sentry-subscription-consumer-transactions
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: sentry
+        role: sentry-subscription-consumer-transactions
+    spec:
+      affinity:
+      containers:
+      - name: sentry-subscription-consumer-transactions
+        image: "getsentry/sentry:23.10.1"
+        imagePullPolicy: IfNotPresent
+        command: ["sentry"]
+        args:
+          - "run"
+          - "consumer"
+          - "transactions-subscription-results"
+          - "--consumer-group"
+          - "query-subscription-consumer"
+        env:
+        - name: SNUBA
+          value: http://sentry-snuba:1218
+        - name: VROOM
+          value: http://sentry-vroom:8085
+        - name: SENTRY_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: sentry-sentry-secret
+              key: "key"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sentry-postgresql-secret
+              key: postgres-password
+        volumeMounts:
+        - mountPath: /etc/sentry
+          name: config
+          readOnly: true
+        - mountPath: /var/lib/sentry/files
+          name: sentry-data
+        resources:
+            {}
+      volumes:
+      - name: config
+        configMap:
+          name: sentry-sentry
+      - name: sentry-data
+        emptyDir: {}

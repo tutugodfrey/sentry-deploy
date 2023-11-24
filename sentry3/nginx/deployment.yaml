@@ -1,0 +1,88 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sentry-nginx
+  labels:
+    app.kubernetes.io/name: nginx
+    app.kubernetes.io/instance: sentry
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate: {}
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: nginx
+      app.kubernetes.io/instance: sentry
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: nginx
+        app.kubernetes.io/instance: sentry
+    spec:
+      automountServiceAccountToken: false
+      shareProcessNamespace: false
+      serviceAccountName: default
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: nginx
+                    app.kubernetes.io/instance: sentry
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+      hostNetwork: false
+      hostIPC: false
+      initContainers:
+        - name: config-init
+          image: docker.io/bitnami/nginx:1.24.0-debian-11-r10
+          command: ["/bin/bash", "-c", "cp -r /opt/bitnami/* /shared/; cp /nginx-conf/nginx.conf /shared/nginx/conf/"]
+          volumeMounts:
+            - name: nginx-server-block
+              mountPath: /nginx-conf/
+            - name: tmpdir
+              mountPath: /shared
+      containers:
+        - name: nginx
+          image: docker.io/bitnami/nginx:1.24.0-debian-11-r10
+          imagePullPolicy: "IfNotPresent"
+          env:
+            - name: BITNAMI_DEBUG
+              value: "false"
+            - name: NGINX_HTTP_PORT_NUMBER
+              value: "8080"
+          envFrom:
+          ports:
+            - name: http
+              containerPort: 8080
+          livenessProbe:
+            failureThreshold: 6
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+            tcpSocket:
+              port: http
+          readinessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 3
+            tcpSocket:
+              port: http
+          resources:
+            limits: {}
+            requests: {}
+          volumeMounts:
+            - name: tmpdir
+              mountPath: /opt/bitnami/
+      volumes:
+        - name: nginx-server-block
+          configMap:
+            name: sentry-nginx
+        - name: tmpdir
+          emptyDir: {}

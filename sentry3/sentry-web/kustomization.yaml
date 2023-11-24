@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - pvc.yaml
+  - sentry-sentry-secret.yaml
+  - configmap-sentry.yaml
+  - deployment-sentry-cron.yaml
+  - deployment-sentry-web.yaml
+  - deployment-sentry-worker.yaml
+  - service-sentry.yaml
+  - sentry-db-check.job.yaml
+  - sentry-db-init.job.yaml
+  - user-create.yaml
+  - deployment-sentry-subscription-consumer-events.yaml                
+  - deployment-sentry-subscription-consumer-generic-metrics.yaml
+  - deployment-sentry-generic-metrics-consumer.yaml
+  - deployment-sentry-subscription-consumer-metrics.yaml
+  - deployment-sentry-ingest-consumer-attachments.yaml
+  - deployment-sentry-subscription-consumer-transactions.yaml
+  - deployment-sentry-ingest-consumer-events.yaml
+  - deployment-sentry-ingest-consumer-transactions.yaml
+  - deployment-sentry-ingest-metrics-consumer-perf.yaml
+  - deployment-sentry-ingest-metrics-consumer-rh.yaml
+  - deployment-sentry-ingest-monitors.yaml
+  - deployment-sentry-ingest-occurrences.yaml
+  - deployment-sentry-ingest-replay-recordings.yaml
+  - deployment-sentry-metrics-consumer.yaml      
+  - deployment-sentry-post-process-forwarder-errors.yaml
+  - deployment-sentry-post-process-forwarder-issue-platform.yaml
+  - deployment-sentry-post-process-forwarder-transactions.yaml
+  - deployment-sentry-billing-metrics-consumer.yaml

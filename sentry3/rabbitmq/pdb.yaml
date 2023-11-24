@@ -1,0 +1,14 @@
+---
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: sentry-rabbitmq
+  labels:
+    app.kubernetes.io/name: rabbitmq
+    app.kubernetes.io/instance: sentry
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels: 
+      app.kubernetes.io/name: rabbitmq
+      app.kubernetes.io/instance: sentry

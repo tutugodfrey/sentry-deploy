@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- secret-snuba-env.yaml     
+- service-snuba.yaml        
+- snuba-db-init.job.yaml    
+- snuba-migrate.job.yaml
+- configmap-snuba.yaml
+- deployment-snuba-api.yaml
+- deployment-snuba-consumer.yaml
+- deployment-snuba-generic-metrics-counters-consumer.yaml
+- deployment-snuba-generic-metrics-distributions-consumer.yaml
+- deployment-snuba-generic-metrics-sets-consumer.yaml
+- deployment-snuba-issue-occurrence-consumer.yaml
+- deployment-snuba-metrics-consumer.yaml
+- deployment-snuba-outcomes-consumer.yaml
+- deployment-snuba-replacer.yaml
+- deployment-snuba-replays-consumer.yaml
+- deployment-snuba-sessions-consumer.yaml
+- deployment-snuba-subscription-consumer-events.yaml
+- deployment-snuba-subscription-consumer-metrics.yaml
+- deployment-snuba-subscription-consumer-sessions.yaml
+- deployment-snuba-subscription-consumer-transactions.yaml
+- deployment-snuba-transactions-consumer.yaml
+
+

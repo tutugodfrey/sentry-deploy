@@ -1,0 +1,64 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sentry-post-process-forward-issue-platform
+  labels:
+    app: sentry
+spec:
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+        app: sentry
+        role: sentry-post-process-forward-issue-platform
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: sentry
+        role: sentry-post-process-forward-issue-platform
+    spec:
+      affinity:
+      containers:
+      - name: sentry-post-process-forward-issue-platform
+        image: "getsentry/sentry:23.10.1"
+        imagePullPolicy: IfNotPresent
+        command: ["sentry"]
+        args:
+          - "run"
+          - "consumer"
+          - "post-process-forwarder-issue-platform"
+          - "--consumer-group"
+          - "post-process-forwarder"
+          - "--synchronize-commit-log-topic=snuba-generic-events-commit-log"
+          - "--synchronize-commit-group"
+          - "generic_events_group"
+        env:
+        - name: SNUBA
+          value: http://sentry-snuba:1218
+        - name: VROOM
+          value: http://sentry-vroom:8085
+        - name: SENTRY_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: sentry-sentry-secret
+              key: "key"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sentry-postgresql-secret
+              key: postgres-password
+        volumeMounts:
+        - mountPath: /etc/sentry
+          name: config
+          readOnly: true
+        - mountPath: /var/lib/sentry/files
+          name: sentry-data
+        resources:
+            {}
+      volumes:
+      - name: config
+        configMap:
+          name: sentry-sentry
+      - name: sentry-data
+        emptyDir: {}

@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sentry-relay
+  labels:
+    app: sentry
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3000
+    targetPort: 3000
+    protocol: TCP
+    name: sentry-relay
+  selector:
+    app: sentry
+    role: relay
