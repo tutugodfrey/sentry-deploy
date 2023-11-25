@@ -16,7 +16,7 @@ data:
     DEBUG = env("DEBUG", "0").lower() in ("1", "true")
 
     # Clickhouse Options
-    SENTRY_DISTRIBUTED_CLICKHOUSE_TABLES = true
+    SENTRY_DISTRIBUTED_CLICKHOUSE_TABLES = True
     CLUSTERS = [
       {
         "host": env("CLICKHOUSE_HOST", "sentry-clickhouse"),
@@ -49,7 +49,7 @@ data:
         "single_node": False,
         "cluster_name": "sentry-clickhouse",
         "distributed_cluster_name": "sentry-clickhouse",
-        "sharding_key": rand(),
+        "sharding_key": "cdc",
       },
     ]
 

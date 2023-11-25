@@ -22,7 +22,7 @@ spec:
         args:
         - |
           sleep 60;
-          SNUBA_SETTINGS=distributed snuba migrations migrate --force;
+          snuba migrations migrate --force;
           echo Finished Running Migration;
         env:
         - name: NAMESPACE
@@ -47,8 +47,10 @@ spec:
             cpu: 2000m
             memory: 1Gi
           requests:
-            cpu: 700m
-            memory: 1Gi
+            # cpu: 700m
+            # memory: 1Gi
+            cpu: 500m
+            memory: 6Mi
       volumes:
       - name: config
         configMap:
